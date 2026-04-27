@@ -1,6 +1,7 @@
 package com.vihttools.mobile.ui.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -9,17 +10,26 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.clickable
+import com.vihttools.mobile.settings.SettingsManager
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit
 ) {
-    var selectedPosition by remember { mutableStateOf("TOP_RIGHT") }
-    var transparency by remember { mutableStateOf(0.5f) }
-    var scanInterval by remember { mutableStateOf(1500L) }
-    var isDarkTheme by remember { mutableStateOf(true) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val savedPosition by SettingsManager.getLastKnownPosition(context).collectAsState(initial = "TOP_RIGHT")
+    val savedTransparency by SettingsManager.getButtonTransparency(context).collectAsState(initial = 0.5f)
+    val savedScanInterval by SettingsManager.getOCRScanInterval(context).collectAsState(initial = 1500L)
+    val savedIsDarkTheme by SettingsManager.getIsDarkTheme(context).collectAsState(initial = true)
+
+    var selectedPosition by remember(savedPosition) { mutableStateOf(savedPosition) }
+    var transparency by remember(savedTransparency) { mutableStateOf(savedTransparency) }
+    var scanInterval by remember(savedScanInterval) { mutableStateOf(savedScanInterval) }
+    var isDarkTheme by remember(savedIsDarkTheme) { mutableStateOf(savedIsDarkTheme) }
 
     Column(
         modifier = Modifier
@@ -36,7 +46,7 @@ fun SettingsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "← Settings",
+                text = "← Настройки",
                 style = MaterialTheme.typography.headlineSmall,
                 color = Color.White,
                 modifier = Modifier.clickable { onBack() }
@@ -48,13 +58,20 @@ fun SettingsScreen(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Button Position
-            SettingSection(title = "Button Position") {
-                val positions = listOf("TOP_RIGHT", "TOP_LEFT", "BOTTOM_RIGHT", "BOTTOM_LEFT")
-                positions.forEach { position ->
+            SettingSection(title = "Положение кнопки") {
+                val positions = SettingsManager.ButtonPosition.entries.associate { position ->
+                    position.name to when (position) {
+                        SettingsManager.ButtonPosition.TOP_RIGHT -> "Сверху справа"
+                        SettingsManager.ButtonPosition.TOP_LEFT -> "Сверху слева"
+                        SettingsManager.ButtonPosition.BOTTOM_RIGHT -> "Снизу справа"
+                        SettingsManager.ButtonPosition.BOTTOM_LEFT -> "Снизу слева"
+                    }
+                }
+                positions.forEach { (position, label) ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable { selectedPosition = position }
                             .padding(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -63,7 +80,7 @@ fun SettingsScreen(
                             onClick = { selectedPosition = position }
                         )
                         Text(
-                            text = position,
+                            text = label,
                             color = Color(0xFFB0B0B0),
                             modifier = Modifier.padding(start = 8.dp)
                         )
@@ -73,8 +90,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Transparency
-            SettingSection(title = "Button Transparency") {
+            SettingSection(title = "Прозрачность кнопки") {
                 Column(modifier = Modifier.padding(8.dp)) {
                     Slider(
                         value = transparency,
@@ -83,7 +99,7 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                     Text(
-                        text = "Opacity: ${(transparency * 100).toInt()}%",
+                        text = "Прозрачность: ${(transparency * 100).toInt()}%",
                         color = Color(0xFFB0B0B0),
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -92,18 +108,18 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // OCR Scan Interval
-            SettingSection(title = "OCR Scan Interval") {
+            SettingSection(title = "Интервал OCR-сканирования") {
                 val intervals = listOf(
-                    500L to "Fast (0.5s)",
-                    1000L to "Normal (1s)",
-                    1500L to "Balanced (1.5s)",
-                    2000L to "Slow (2s)"
+                    SettingsManager.OCRInterval.FAST.ms to "Быстро (0.5 сек)",
+                    SettingsManager.OCRInterval.NORMAL.ms to "Обычно (1 сек)",
+                    SettingsManager.OCRInterval.BALANCED.ms to "Баланс (1.5 сек)",
+                    SettingsManager.OCRInterval.SLOW.ms to "Медленно (2 сек)"
                 )
                 intervals.forEach { (interval, label) ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable { scanInterval = interval }
                             .padding(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -122,8 +138,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Theme
-            SettingSection(title = "Theme") {
+            SettingSection(title = "Тема") {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -132,7 +147,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Dark Theme",
+                        text = "Тёмная тема",
                         color = Color(0xFFB0B0B0)
                     )
                     Switch(
@@ -144,9 +159,18 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Save Button
             Button(
-                onClick = { onBack() },
+                onClick = {
+                    scope.launch {
+                        val position = SettingsManager.ButtonPosition.valueOf(selectedPosition)
+                        SettingsManager.setButtonPosition(context, position.x, position.y)
+                        SettingsManager.setLastKnownPosition(context, selectedPosition)
+                        SettingsManager.setButtonTransparency(context, transparency)
+                        SettingsManager.setOCRScanInterval(context, scanInterval)
+                        SettingsManager.setIsDarkTheme(context, isDarkTheme)
+                        onBack()
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -155,7 +179,7 @@ fun SettingsScreen(
                 )
             ) {
                 Text(
-                    text = "Save Settings",
+                    text = "Сохранить настройки",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White
                 )

@@ -2,15 +2,11 @@ package com.vihttools.mobile.service
 
 import android.app.Service
 import android.content.Intent
-import android.graphics.Bitmap
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
-import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import androidx.core.app.NotificationCompat
-import com.vihttools.mobile.R
 import com.vihttools.mobile.data.AppDatabase
 import com.vihttools.mobile.data.Report
 import com.vihttools.mobile.data.ReportCircularBuffer
@@ -32,6 +28,7 @@ class OCRMonitoringService : Service() {
     private var isMonitoring = false
     private var gameDetected = false
     private var scanIntervalMs = 1500L
+    private var settingsJob: Job? = null
     private lateinit var database: AppDatabase
 
     override fun onCreate() {
@@ -50,10 +47,11 @@ class OCRMonitoringService : Service() {
             startMonitoring()
         }
 
-        // Load scan interval from settings
-        scope.launch {
-            SettingsManager.getOCRScanInterval(this@OCRMonitoringService).collect { interval ->
-                scanIntervalMs = interval
+        if (settingsJob == null) {
+            settingsJob = scope.launch {
+                SettingsManager.getOCRScanInterval(this@OCRMonitoringService).collect { interval ->
+                    scanIntervalMs = interval
+                }
             }
         }
 
@@ -78,6 +76,7 @@ class OCRMonitoringService : Service() {
     private fun startMonitoring() {
         if (isMonitoring) return
         isMonitoring = true
+        performOCRScan()
         scheduleNextScan()
     }
 
@@ -100,17 +99,14 @@ class OCRMonitoringService : Service() {
                 val bitmap = screenCaptureManager?.captureChatArea() ?: return@launch
                 val recognizedText = ocrDetector.recognizeText(bitmap)
 
-                // Check for game detection
-                if (!gameDetected) {
-                    gameDetected = ocrDetector.isGameDetected(recognizedText)
-                    if (gameDetected) {
-                        showGameDetectedNotification()
-                    }
+                val reports = ocrDetector.extractReports(recognizedText)
+
+                if (!gameDetected && (ocrDetector.isGameDetected(recognizedText, bitmap) || reports.isNotEmpty())) {
+                    gameDetected = true
+                    showReadyNotification()
                 }
 
                 if (gameDetected) {
-                    // Extract and process reports
-                    val reports = ocrDetector.extractReports(recognizedText)
                     processReports(reports)
                 }
 
@@ -143,44 +139,51 @@ class OCRMonitoringService : Service() {
             )
 
             if (reportBuffer.add(report)) {
-                // Save to database
-                database.reportDao().insertReport(report)
+                val reportId = database.reportDao().insertReport(report).toInt()
+                val savedReport = report.copy(id = reportId)
 
-                // Show notification
-                showReportNotification(reportData)
+                showReportNotification(savedReport)
             }
         }
     }
 
-    private fun showGameDetectedNotification() {
-        val notification = NotificationCompat.Builder(this, NotificationManager.REPORT_CHANNEL_ID)
-            .setContentTitle("Game Detected")
-            .setContentText("Viht Tools Mobile is now monitoring reports")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setAutoCancel(true)
-            .build()
+    private fun showReadyNotification() {
+        sendOverlayEvent(Intent(ACTION_READY))
 
         val notificationManager = getSystemService(android.app.NotificationManager::class.java)
-        notificationManager.notify(3, notification)
+        notificationManager.notify(2, NotificationManager.buildOCRReadyNotification(this).build())
+        notificationManager.notify(3, NotificationManager.buildReadyNotification(this).build())
     }
 
-    private fun showReportNotification(reportData: OCRTextDetector.ReportData) {
+    private fun showReportNotification(report: Report) {
+        sendOverlayEvent(
+            Intent(ACTION_NEW_REPORT)
+                .putExtra(EXTRA_REPORT_ID, report.id)
+        )
+
         val notification = NotificationManager.buildReportNotification(
             this,
-            reportData.nickname,
-            reportData.playerId,
-            reportData.text,
-            reportData.reportCount
+            report.nickname,
+            report.playerId,
+            report.text,
+            report.reportCount
         ).build()
 
         val notificationManager = getSystemService(android.app.NotificationManager::class.java)
         notificationManager.notify(
-            reportData.playerId,  // Use playerId as notification ID
+            report.playerId,  // Use playerId as notification ID
             notification
         )
     }
 
+    private fun sendOverlayEvent(intent: Intent) {
+        startService(intent.setClass(this, OverlayService::class.java))
+    }
+
     companion object {
         private const val RESULT_OK = -1
+        const val ACTION_READY = "com.vihttools.mobile.ACTION_READY"
+        const val ACTION_NEW_REPORT = "com.vihttools.mobile.ACTION_NEW_REPORT"
+        const val EXTRA_REPORT_ID = "extra_report_id"
     }
 }

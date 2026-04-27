@@ -75,7 +75,7 @@ class ReportsListPanel(
         }
 
         val titleText = TextView(context).apply {
-            text = "Reports (${reports.size})"
+            text = "Репорты (${reports.size})"
             textSize = 14f
             setTextColor(0xFFFFFFFF.toInt())
             layoutParams = LinearLayout.LayoutParams(
@@ -178,7 +178,7 @@ class ReportsListPanel(
 
         // Report count
         val countText = TextView(context).apply {
-            text = "Reports: ${report.reportCount}"
+            text = "Репортов: ${report.reportCount}"
             textSize = 10f
             setTextColor(0xFF606060.toInt())
             layoutParams = LinearLayout.LayoutParams(

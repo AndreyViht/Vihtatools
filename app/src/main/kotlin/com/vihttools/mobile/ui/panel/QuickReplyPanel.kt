@@ -18,16 +18,18 @@ import com.vihttools.mobile.util.ClipboardManager
 class QuickReplyPanel(
     private val context: Context,
     private val windowManager: WindowManager,
+    private val onTemplateSelected: (Report, Template) -> Unit,
     private val onClose: () -> Unit
 ) {
 
     private var panelView: FrameLayout? = null
     private var isShowing = false
+    private var showingTemplates = false
 
     fun show(report: Report, templates: List<Template>) {
         if (isShowing) return
 
-        createPanelView(report, templates)
+        createPanelView(report, templates, showTemplates = false)
         isShowing = true
     }
 
@@ -40,7 +42,8 @@ class QuickReplyPanel(
         }
     }
 
-    private fun createPanelView(report: Report, templates: List<Template>) {
+    private fun createPanelView(report: Report, templates: List<Template>, showTemplates: Boolean) {
+        showingTemplates = showTemplates
         val params = WindowManager.LayoutParams().apply {
             type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -111,7 +114,6 @@ class QuickReplyPanel(
 
         contentContainer.addView(infoCard)
 
-        // Spacer
         val spacer1 = View(context).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -120,43 +122,11 @@ class QuickReplyPanel(
         }
         contentContainer.addView(spacer1)
 
-        // Scrollable buttons container
-        val scrollView = ScrollView(context).apply {
-            layoutParams = FrameLayout.LayoutParams(
-                320,
-                400
-            ).apply {
-                gravity = Gravity.CENTER
-            }
+        if (showingTemplates) {
+            contentContainer.addView(createTemplatesList(report, templates))
+        } else {
+            contentContainer.addView(createAnswerButton(report, templates))
         }
-
-        val buttonsContainer = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT
-            )
-        }
-
-        // Create beautiful buttons for each template
-        for ((index, template) in templates.withIndex()) {
-            val buttonView = createTemplateButton(report, template)
-            buttonsContainer.addView(buttonView)
-
-            // Add spacing between buttons
-            if (index < templates.size - 1) {
-                val spacing = View(context).apply {
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        8
-                    )
-                }
-                buttonsContainer.addView(spacing)
-            }
-        }
-
-        scrollView.addView(buttonsContainer)
-        contentContainer.addView(scrollView)
 
         // Spacer
         val spacer2 = View(context).apply {
@@ -176,6 +146,87 @@ class QuickReplyPanel(
         windowManager.addView(panelView, params)
     }
 
+    private fun showTemplates(report: Report, templates: List<Template>) {
+        hideWithoutCallback()
+        createPanelView(report, templates, showTemplates = true)
+        isShowing = true
+    }
+
+    private fun hideWithoutCallback() {
+        if (panelView != null && isShowing) {
+            windowManager.removeView(panelView)
+            panelView = null
+            isShowing = false
+        }
+    }
+
+    private fun createAnswerButton(report: Report, templates: List<Template>): View {
+        val answerButton = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = FrameLayout.LayoutParams(
+                320,
+                52
+            )
+            setBackgroundColor(0xCCE63946.toInt())
+            setPadding(16, 12, 16, 12)
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { showTemplates(report, templates) }
+        }
+
+        val answerText = TextView(context).apply {
+            text = "Ответ"
+            textSize = 16f
+            setTextColor(0xFFFFFFFF.toInt())
+            gravity = android.view.Gravity.CENTER
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+        }
+        answerButton.addView(answerText)
+
+        return answerButton
+    }
+
+    private fun createTemplatesList(report: Report, templates: List<Template>): View {
+        val scrollView = ScrollView(context).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                320,
+                400
+            ).apply {
+                gravity = Gravity.CENTER
+            }
+        }
+
+        val buttonsContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        for ((index, template) in templates.withIndex()) {
+            val buttonView = createTemplateButton(report, template)
+            buttonsContainer.addView(buttonView)
+
+            if (index < templates.size - 1) {
+                val spacing = View(context).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        8
+                    )
+                }
+                buttonsContainer.addView(spacing)
+            }
+        }
+
+        scrollView.addView(buttonsContainer)
+        return scrollView
+    }
+
     private fun createTemplateButton(report: Report, template: Template): View {
         val buttonContainer = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -192,6 +243,7 @@ class QuickReplyPanel(
             setOnClickListener {
                 val formattedCommand = template.formatCommand(report.playerId)
                 ClipboardManager.copyToClipboard(context, formattedCommand, template.label)
+                onTemplateSelected(report, template)
             }
 
             // Hover effect
@@ -263,7 +315,7 @@ class QuickReplyPanel(
         }
 
         val closeText = TextView(context).apply {
-            text = "Close"
+            text = "Закрыть"
             textSize = 14f
             setTextColor(0xFFFFFFFF.toInt())
             gravity = android.view.Gravity.CENTER
