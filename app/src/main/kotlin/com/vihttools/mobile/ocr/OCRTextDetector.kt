@@ -71,11 +71,12 @@ class OCRTextDetector {
     /**
      * Detect if a line contains a red nickname (report)
      * RGB ≈ #e63946, tolerance ±40 per channel
+     * Analyzes pixel colors in the bitmap and checks for red text
      */
     fun isRedNickname(bitmap: Bitmap, lineIndex: Int): Boolean {
-        // This is a placeholder - actual implementation would analyze pixel colors
-        // in the specific line where the nickname appears
-        return false  // TODO: Implement pixel color analysis
+        val redPercentage = ColorDetector.analyzeRedPixels(bitmap)
+        // Consider it a red nickname if at least 5% of pixels are red
+        return redPercentage >= 5.0f
     }
 
     /**
