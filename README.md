@@ -1,166 +1,114 @@
-# Viht Tools Mobile
+<div align="center">
 
-Android overlay application for Grand Mobile RolePlay administrators. Monitors incoming reports in real-time and provides quick-reply functionality without switching applications.
-
-## Project Structure
+<br/>
 
 ```
-VihtToolsMobile/
-├── app/
-│   ├── src/main/
-│   │   ├── kotlin/com/vihttools/mobile/
-│   │   │   ├── MainActivity.kt              # Main activity with Compose UI
-│   │   │   ├── service/
-│   │   │   │   ├── OverlayService.kt       # Floating button management
-│   │   │   │   └── OCRMonitoringService.kt # Screen capture & OCR
-│   │   │   ├── data/
-│   │   │   │   ├── Report.kt               # Data models
-│   │   │   │   ├── ReportDao.kt            # Database access
-│   │   │   │   └── AppDatabase.kt          # Room database
-│   │   │   └── ui/theme/
-│   │   │       ├── Theme.kt                # Material 3 theme
-│   │   │       └── Typography.kt           # Text styles
-│   │   ├── res/
-│   │   │   ├── values/
-│   │   │   │   ├── strings.xml             # String resources
-│   │   │   │   ├── colors.xml              # Color palette
-│   │   │   │   └── themes.xml              # Theme definitions
-│   │   └── AndroidManifest.xml             # App manifest
-│   └── build.gradle.kts                    # App build config
-├── build.gradle.kts                        # Root build config
-├── settings.gradle.kts                     # Gradle settings
-├── gradle.properties                       # Gradle properties
-├── design.md                               # UI/UX design specification
-└── todo.md                                 # Development tasks
-
+ ██╗   ██╗██╗██╗  ██╗████████╗    ████████╗ ██████╗  ██████╗ ██╗     ███████╗
+ ██║   ██║██║██║  ██║╚══██╔══╝    ╚══██╔══╝██╔═══██╗██╔═══██╗██║     ██╔════╝
+ ██║   ██║██║███████║   ██║          ██║   ██║   ██║██║   ██║██║     ███████╗
+ ╚██╗ ██╔╝██║██╔══██║   ██║          ██║   ██║   ██║██║   ██║██║     ╚════██║
+  ╚████╔╝ ██║██║  ██║   ██║          ██║   ╚██████╔╝╚██████╔╝███████╗███████║
+   ╚═══╝  ╚═╝╚═╝  ╚═╝   ╚═╝          ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝╚══════╝
 ```
 
-## Tech Stack
+### **Viht Tools Mobile**
+*Инструмент администратора для Grand Mobile RolePlay*
 
-- **Language:** Kotlin
-- **UI Framework:** Jetpack Compose + Material 3
-- **OCR:** Google ML Kit Text Recognition v2
-- **Screen Capture:** MediaProjection API
-- **Overlay:** WindowManager TYPE_APPLICATION_OVERLAY
-- **Database:** Room DB + SQLite
-- **Preferences:** DataStore
-- **Build System:** Gradle 8.2.0
+<br/>
 
-## Key Features (Planned)
+![Platform](https://img.shields.io/badge/Platform-Android%208.0+-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+![Language](https://img.shields.io/badge/Language-Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
+![UI](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)
+![Status](https://img.shields.io/badge/Status-In%20Development-FF6B35?style=for-the-badge)
 
-### Phase 1: Foundation & Permissions ✓
-- Permission request system (Overlay + MediaProjection)
-- Main screen with "Start Overlay" button
-- Basic UI structure
+<br/>
 
-### Phase 2: Floating Button & Overlay
-- Draggable floating button "V"
-- Button state colors (gray/red/green)
-- Report count badge
-- Position persistence
+---
 
-### Phase 3: OCR & Game Detection
-- Screen capture via MediaProjection
-- ML Kit text recognition
-- Game detection (welcome message)
-- Configurable scan intervals
+</div>
 
-### Phase 4: Report Detection & Queue
-- Report pattern detection (Regex + RGB)
-- Circular buffer (max 10 reports)
-- Deduplication logic
-- Room database storage
+## О проекте
 
-### Phase 5: Notifications & UI Panels
-- Android notifications
-- Reports list panel
-- Quick reply panel
-- Panel animations
+**Viht Tools Mobile** — Android-оверлей для администраторов сервера **Grand Mobile RolePlay**.
 
-### Phase 6: Template System
-- Template management (add/edit/delete)
-- Copy-to-clipboard functionality
-- Report status tracking
-- Answer blocking
+Приложение работает поверх любых других приложений в режиме реального времени: мониторит входящие репорты игроков через OCR-распознавание экрана и позволяет отвечать на них прямо из плавающей кнопки — без переключения между окнами.
 
-### Phase 7: Settings Screen
-- Button position selector
-- Transparency slider
-- OCR interval selector
-- Theme toggle
-- Template editor
+```
+┌─────────────────────────────────────────────────────┐
+│  Игра запущена          [V] ← плавающая кнопка               │
+│                              ╔══════════════════╗         │
+│  [Новый репорт от игрока] → ║  Репорты (3)         ║         │
+│                              ║  ───────────────  ║         │
+│                              ║  ▸ ID 1412 ...       ║         │
+│                              ║  ▸ ID 2233 ...       ║         │
+│                              ║  ▸ ID 0091 ...       ║         │
+│                              ╚══════════════════╝         │
+└─────────────────────────────────────────────────────┘
+```
 
-### Phase 8: Polish & Testing
-- Haptic feedback
-- Battery optimization
-- Real device testing
-- Documentation
+<br/>
 
-## Building & Running
+## Возможности
 
-### Prerequisites
-- Android SDK 24+ (API level 24)
-- Kotlin 1.9.22+
-- Gradle 8.2.0+
+| Функция | Описание |
+|--------|----------|
+| 🔲 **Плавающая кнопка** | Draggable оверлей поверх любых приложений |
+| 🔍 **OCR-мониторинг** | Автоматическое распознавание репортов с экрана |
+| 📋 **Очередь репортов** | Буфер до 10 репортов с дедупликацией |
+| ⚡ **Быстрые ответы** | Шаблонные ответы в один клик |
+| 🗃️ **История** | Локальная база данных всех обработанных репортов |
+| 🔔 **Уведомления** | Push-уведомления о новых репортах |
 
-### Build
+<br/>
+
+## Стек технологий
+
+- **Kotlin** — основной язык
+- **Jetpack Compose + Material 3** — UI
+- **Google ML Kit** — OCR-распознавание текста
+- **MediaProjection API** — захват экрана
+- **Room DB** — локальное хранилище
+- **DataStore** — настройки и предпочтения
+
+<br/>
+
+## Требования
+
+- Android **8.0+** (API 24)
+- Разрешения: `SYSTEM_ALERT_WINDOW`, `FOREGROUND_SERVICE`, `POST_NOTIFICATIONS`
+
+<br/>
+
+## Сборка
+
 ```bash
+# Собрать проект
 ./gradlew build
-```
 
-### Run on Device
-```bash
+# Установить на устройство
 ./gradlew installDebug
 ```
 
-### Debug
-```bash
-./gradlew assembleDebug
-adb install app/build/outputs/apk/debug/app-debug.apk
-```
+> ⚠️ Эмулятор не поддерживает оверлеи в полной мере — тестируйте на реальном устройстве.
 
-## Permissions Required
+<br/>
 
-- `SYSTEM_ALERT_WINDOW` — Display overlay over other apps
-- `FOREGROUND_SERVICE` — Run foreground service
-- `FOREGROUND_SERVICE_MEDIA_PROJECTION` — Screen capture service
-- `POST_NOTIFICATIONS` — Send notifications
-- `INTERNET` — ML Kit connectivity
+---
 
-## Important Notes
+<div align="center">
 
-- OCR accuracy depends on screen resolution and font
-- RGB color tolerance: ±40 per channel
-- Android 12+ requires explicit MediaProjection confirmation per session
-- Text input not automated (user pastes manually)
-- Constant screen capture may impact battery life
-- Minimum Android version: 8.0 (API 24)
+<br/>
 
-## Development Workflow
+Разработано в сообществе **[Viht Community](https://github.com/viht)**
 
-1. Read `design.md` for UI/UX specifications
-2. Check `todo.md` for current tasks
-3. Follow Kotlin style guide (ktlint)
-4. Write unit tests for business logic
-5. Test on real device (emulator limitations with overlay)
+<br/>
 
-## Architecture
+> *Создатель — **Andrey Viht***
 
-The app follows a clean architecture pattern with separation of concerns:
+<br/>
 
-- **UI Layer:** Jetpack Compose (MainActivity, Screens)
-- **Service Layer:** OverlayService, OCRMonitoringService
-- **Data Layer:** Room DB, DataStore preferences
-- **Domain Layer:** Report models, business logic
+`Closed distribution` · Только для внутреннего использования
 
-## References
+<br/>
 
-- [Android Overlay Documentation](https://developer.android.com/reference/android/view/WindowManager.LayoutParams#TYPE_APPLICATION_OVERLAY)
-- [MediaProjection API](https://developer.android.com/reference/android/media/projection/MediaProjection)
-- [ML Kit Text Recognition](https://developers.google.com/ml-kit/vision/text-recognition)
-- [Jetpack Compose](https://developer.android.com/jetpack/compose)
-- [Room Database](https://developer.android.com/training/data-storage/room)
-
-## License
-
-Closed distribution. For internal use only.
+</div>
