@@ -37,6 +37,7 @@ class OverlayService : Service() {
     private var buttonColor = 0x80606060.toInt()  // Gray by default
 
     private val scope = CoroutineScope(Dispatchers.Main + Job())
+    private var settingsJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -67,7 +68,11 @@ class OverlayService : Service() {
     }
 
     private fun loadSettings() {
-        scope.launch {
+        if (settingsJob != null) {
+            return
+        }
+
+        settingsJob = scope.launch {
             combine(
                 SettingsManager.getButtonPositionX(this@OverlayService),
                 SettingsManager.getButtonPositionY(this@OverlayService),
