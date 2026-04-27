@@ -35,7 +35,7 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun VihtToolsMobileTheme(
-    darkTheme: Boolean = isSystemInDarkMode(),
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
