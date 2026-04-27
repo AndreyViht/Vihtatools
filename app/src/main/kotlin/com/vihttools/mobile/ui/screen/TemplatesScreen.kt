@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.vihttools.mobile.data.Template
+import androidx.compose.foundation.clickable
 
 @Composable
 fun TemplatesScreen(
@@ -163,9 +164,4 @@ fun TemplateCard(
             }
         }
     }
-}
-
-@Composable
-fun Clickable(modifier: Modifier = Modifier, onClick: () -> Unit) {
-    // Placeholder for clickable modifier
 }
