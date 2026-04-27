@@ -4,8 +4,8 @@
 
 ```
  ██╗   ██╗██╗██╗  ██╗████████╗    ████████╗ ██████╗  ██████╗ ██╗     ███████╗
- ██║   ██║██║██║  ██║╚══██╔══╝    ╚══██╔══╝██╔═══██╗██╔═══██╗██║     ██╔════╝
- ██║   ██║██║███████║   ██║            ██║   ██║   ██║██║   ██║██║     ███████╗
+ ██║   ██║██║██║  ██║╚══██╔══╝    ╚══██╔══╝██╔═══██╗██╔═══██╗██║     ██╔═══██║
+ ██║   ██║██║███████║   ██║            ██║   ██║   ██║██║   ██║██║     ███████║
  ╚██╗ ██╔╝██║██╔══██║   ██║            ██║   ██║   ██║██║   ██║██║     ╚════██║
   ╚████╔╝ ██║██║  ██║   ██║            ██║   ╚██████╔╝╚██████╔╝███████╗███████║
    ╚═══╝  ╚═╝╚═╝  ╚═╝   ╚═╝            ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝╚══════╝
@@ -16,7 +16,7 @@
 
 <br/>
 
-![Platform](https://img.shields.io/badge/Platform-Android%208.0+-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Android%208.1+-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![Language](https://img.shields.io/badge/Language-Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
 ![UI](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)
 ![Status](https://img.shields.io/badge/Status-In%20Development-FF6B35?style=for-the-badge)
@@ -31,7 +31,7 @@
 
 **Viht Tools Mobile** — Android-оверлей для администраторов сервера **Grand Mobile RolePlay**.
 
-Приложение работает поверх любых других приложений в режиме реального времени: мониторит входящие репорты игроков через OCR-распознавание экрана и позволяет отвечать на них прямо из плавающей кнопки — без переключения между окнами.
+Приложение работает поверх любых других приложений в режиме реального времени: мониторит входящие репорты, выводит их на экран и предоставляет быстрые ответы.
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -74,7 +74,7 @@
 
 ## Требования
 
-- Android **8.0+** (API 24)
+- Android **8.1+** (API 26)
 - Разрешения: `SYSTEM_ALERT_WINDOW`, `FOREGROUND_SERVICE`, `POST_NOTIFICATIONS`
 
 <br/>
