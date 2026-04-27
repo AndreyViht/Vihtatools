@@ -106,8 +106,7 @@ class ScreenCaptureManager(
         val planes = image.planes
         val buffer = planes[0].buffer
         val pixelStride = planes[0].pixelStride
-        val rowPadding = planes[0].rowPadding
-        val w = image.width - rowPadding / pixelStride
+        val w = image.width
 
         val bitmap = Bitmap.createBitmap(w, image.height, Bitmap.Config.ARGB_8888)
         bitmap.copyPixelsFromBuffer(buffer)
