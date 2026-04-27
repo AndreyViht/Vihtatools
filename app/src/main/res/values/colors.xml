@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#E63946</color>
+    <color name="primary_dark">#A4161A</color>
+    <color name="accent">#457B9D</color>
+    <color name="background">#1A1A1A</color>
+    <color name="surface">#2D2D2D</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B0B0</color>
+    <color name="border">#404040</color>
+    <color name="success">#2A9D8F</color>
+    <color name="warning">#F4A261</color>
+    <color name="error">#E63946</color>
+    <color name="button_gray">#606060</color>
+    <color name="button_red">#E63946</color>
+    <color name="button_green">#2A9D8F</color>
+    <color name="ic_launcher_background">#E63946</color>
+</resources>
+<!-- needed for launcher icon -->
