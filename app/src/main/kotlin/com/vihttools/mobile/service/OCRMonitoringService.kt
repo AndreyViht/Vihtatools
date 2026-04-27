@@ -139,38 +139,48 @@ class OCRMonitoringService : Service() {
             )
 
             if (reportBuffer.add(report)) {
-                // Save to database
-                database.reportDao().insertReport(report)
+                val reportId = database.reportDao().insertReport(report).toInt()
+                val savedReport = report.copy(id = reportId)
 
-                // Show notification
-                showReportNotification(reportData)
+                showReportNotification(savedReport)
             }
         }
     }
 
     private fun showReadyNotification() {
+        sendBroadcast(Intent(ACTION_READY).setPackage(packageName))
+
         val notificationManager = getSystemService(android.app.NotificationManager::class.java)
         notificationManager.notify(2, NotificationManager.buildOCRReadyNotification(this).build())
         notificationManager.notify(3, NotificationManager.buildReadyNotification(this).build())
     }
 
-    private fun showReportNotification(reportData: OCRTextDetector.ReportData) {
+    private fun showReportNotification(report: Report) {
+        sendBroadcast(
+            Intent(ACTION_NEW_REPORT)
+                .setPackage(packageName)
+                .putExtra(EXTRA_REPORT_ID, report.id)
+        )
+
         val notification = NotificationManager.buildReportNotification(
             this,
-            reportData.nickname,
-            reportData.playerId,
-            reportData.text,
-            reportData.reportCount
+            report.nickname,
+            report.playerId,
+            report.text,
+            report.reportCount
         ).build()
 
         val notificationManager = getSystemService(android.app.NotificationManager::class.java)
         notificationManager.notify(
-            reportData.playerId,  // Use playerId as notification ID
+            report.playerId,  // Use playerId as notification ID
             notification
         )
     }
 
     companion object {
         private const val RESULT_OK = -1
+        const val ACTION_READY = "com.vihttools.mobile.ACTION_READY"
+        const val ACTION_NEW_REPORT = "com.vihttools.mobile.ACTION_NEW_REPORT"
+        const val EXTRA_REPORT_ID = "extra_report_id"
     }
 }

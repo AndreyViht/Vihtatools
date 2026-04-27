@@ -1,7 +1,10 @@
 package com.vihttools.mobile.service
 
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
@@ -16,6 +19,7 @@ import com.vihttools.mobile.data.Report
 import com.vihttools.mobile.data.Template
 import com.vihttools.mobile.notification.NotificationManager
 import com.vihttools.mobile.settings.SettingsManager
+import com.vihttools.mobile.ui.panel.OverlayNotificationPanel
 import com.vihttools.mobile.ui.panel.QuickReplyPanel
 import com.vihttools.mobile.ui.panel.ReportsListPanel
 import kotlinx.coroutines.CoroutineScope
@@ -40,6 +44,15 @@ class OverlayService : Service() {
     private lateinit var database: AppDatabase
     private var reportsPanel: ReportsListPanel? = null
     private var quickReplyPanel: QuickReplyPanel? = null
+    private var overlayNotificationPanel: OverlayNotificationPanel? = null
+    private val ocrEventReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                OCRMonitoringService.ACTION_READY -> showReadyOverlayNotification()
+                OCRMonitoringService.ACTION_NEW_REPORT -> handleNewReportEvent(intent)
+            }
+        }
+    }
 
     private val scope = CoroutineScope(Dispatchers.Main + Job())
     private var settingsJob: Job? = null
@@ -49,9 +62,13 @@ class OverlayService : Service() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         database = AppDatabase.getDatabase(this)
+        overlayNotificationPanel = OverlayNotificationPanel(this, windowManager) { report ->
+            openQuickReplyPanel(report)
+        }
         NotificationManager.createNotificationChannels(this)
         createNotification()
         observeReportCount()
+        registerOcrEventReceiver()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -66,6 +83,8 @@ class OverlayService : Service() {
         super.onDestroy()
         quickReplyPanel?.hide()
         reportsPanel?.hide()
+        overlayNotificationPanel?.hideAll()
+        runCatching { unregisterReceiver(ocrEventReceiver) }
         if (overlayView != null) {
             windowManager.removeView(overlayView)
         }
@@ -75,6 +94,18 @@ class OverlayService : Service() {
     private fun createNotification() {
         val notification = NotificationManager.buildOverlayNotification(this).build()
         startForeground(1, notification)
+    }
+
+    private fun registerOcrEventReceiver() {
+        val filter = IntentFilter().apply {
+            addAction(OCRMonitoringService.ACTION_READY)
+            addAction(OCRMonitoringService.ACTION_NEW_REPORT)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(ocrEventReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(ocrEventReceiver, filter)
+        }
     }
 
     private fun observeReportCount() {
@@ -256,12 +287,34 @@ class OverlayService : Service() {
             quickReplyPanel = QuickReplyPanel(
                 context = this@OverlayService,
                 windowManager = windowManager,
+                onTemplateSelected = { selectedReport, _ ->
+                    scope.launch {
+                        database.reportDao().markAsAnswered(selectedReport.id, System.currentTimeMillis())
+                        overlayNotificationPanel?.hideReport(selectedReport.id)
+                    }
+                    quickReplyPanel?.hide()
+                    quickReplyPanel = null
+                },
                 onClose = {
                     quickReplyPanel = null
                 }
             ).also { panel ->
                 panel.show(report, templates)
             }
+        }
+    }
+
+    private fun showReadyOverlayNotification() {
+        overlayNotificationPanel?.showReady()
+    }
+
+    private fun handleNewReportEvent(intent: Intent) {
+        val reportId = intent.getLongExtra(OCRMonitoringService.EXTRA_REPORT_ID, 0L).toInt()
+        if (reportId == 0) return
+
+        scope.launch {
+            val report = database.reportDao().getReportById(reportId) ?: return@launch
+            overlayNotificationPanel?.showReport(report)
         }
     }
 
