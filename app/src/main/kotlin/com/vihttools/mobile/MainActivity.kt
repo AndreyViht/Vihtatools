@@ -2,29 +2,24 @@ package com.vihttools.mobile
 
 import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
+import com.vihttools.mobile.notification.NotificationManager
 import com.vihttools.mobile.permission.PermissionManager
+import com.vihttools.mobile.service.OCRMonitoringService
 import com.vihttools.mobile.service.OverlayService
 import com.vihttools.mobile.ui.screen.HomeScreen
 import com.vihttools.mobile.ui.screen.PermissionScreen
+import com.vihttools.mobile.ui.screen.SettingsScreen
 import com.vihttools.mobile.ui.theme.VihtToolsMobileTheme
 
 class MainActivity : ComponentActivity() {
@@ -57,9 +52,11 @@ class MainActivity : ComponentActivity() {
     private var isOverlayRunning by mutableStateOf(false)
     private var activeReports by mutableStateOf(0)
     private var respondedReports by mutableStateOf(0)
+    private var permissionRefreshToken by mutableStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        NotificationManager.createNotificationChannels(this)
 
         setContent {
             VihtToolsMobileTheme {
@@ -67,23 +64,34 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color(0xFF1A1A1A)
                 ) {
-                    val missingPermissions = PermissionManager.getMissingPermissions(this@MainActivity)
+                    val permissionRefresh = permissionRefreshToken
+                    val missingPermissions = remember(permissionRefresh) {
+                        PermissionManager.getMissingPermissions(this@MainActivity)
+                    }
+                    var permissionSkipped by remember { mutableStateOf(false) }
+                    var currentScreen by remember { mutableStateOf("home") }
 
-                    if (missingPermissions.isNotEmpty()) {
+                    if (missingPermissions.isNotEmpty() && !permissionSkipped) {
                         PermissionScreen(
                             missingPermissions = missingPermissions,
                             onGoToSettings = { requestMissingPermissions() },
-                            onSkip = { /* Continue anyway */ }
+                            onSkip = { permissionSkipped = true }
                         )
                     } else {
-                        HomeScreen(
-                            isOverlayRunning = isOverlayRunning,
-                            activeReports = activeReports,
-                            respondedReports = respondedReports,
-                            onStartOverlay = { startOverlay() },
-                            onStopOverlay = { stopOverlay() },
-                            onNavigateToSettings = { /* Navigate to settings */ }
-                        )
+                        when (currentScreen) {
+                            "settings" -> SettingsScreen(
+                                onBack = { currentScreen = "home" }
+                            )
+
+                            else -> HomeScreen(
+                                isOverlayRunning = isOverlayRunning,
+                                activeReports = activeReports,
+                                respondedReports = respondedReports,
+                                onStartOverlay = { startOverlay() },
+                                onStopOverlay = { stopOverlay() },
+                                onNavigateToSettings = { currentScreen = "settings" }
+                            )
+                        }
                     }
                 }
             }
@@ -92,10 +100,20 @@ class MainActivity : ComponentActivity() {
         checkPermissions()
     }
 
+    override fun onResume() {
+        super.onResume()
+        refreshPermissionState()
+    }
+
     private fun checkPermissions() {
+        refreshPermissionState()
         if (!PermissionManager.hasAllPermissions(this)) {
             requestMissingPermissions()
         }
+    }
+
+    private fun refreshPermissionState() {
+        permissionRefreshToken++
     }
 
     private fun requestMissingPermissions() {
@@ -115,25 +133,28 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        val mediaProjectionManager = getSystemService(MediaProjectionManager::class.java)
         val intent = mediaProjectionManager.createScreenCaptureIntent()
         mediaProjectionLauncher.launch(intent)
     }
 
     private fun startOverlayService(data: Intent) {
-        val serviceIntent = Intent(this, OverlayService::class.java)
-        serviceIntent.putExtra("media_projection_data", data)
+        val overlayIntent = Intent(this, OverlayService::class.java)
+        val ocrIntent = Intent(this, OCRMonitoringService::class.java).apply {
+            putExtra("media_projection_data", data)
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent)
+            startForegroundService(overlayIntent)
+            startForegroundService(ocrIntent)
         } else {
-            startService(serviceIntent)
+            startService(overlayIntent)
+            startService(ocrIntent)
         }
         isOverlayRunning = true
     }
 
     private fun stopOverlay() {
-        val serviceIntent = Intent(this, OverlayService::class.java)
-        stopService(serviceIntent)
+        stopService(Intent(this, OverlayService::class.java))
+        stopService(Intent(this, OCRMonitoringService::class.java))
         isOverlayRunning = false
     }
 }

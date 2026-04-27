@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.hardware.display.DisplayManager
+import android.hardware.display.VirtualDisplay
 import android.media.Image
 import android.media.ImageReader
 import android.media.projection.MediaProjection
@@ -21,11 +22,21 @@ class ScreenCaptureManager(
 ) {
 
     private var imageReader: ImageReader? = null
+    private var virtualDisplay: VirtualDisplay? = null
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val displayMetrics = DisplayMetrics()
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     init {
         windowManager.defaultDisplay.getMetrics(displayMetrics)
+        mediaProjection.registerCallback(
+            object : MediaProjection.Callback() {
+                override fun onStop() {
+                    release()
+                }
+            },
+            mainHandler
+        )
     }
 
     /**
@@ -61,6 +72,9 @@ class ScreenCaptureManager(
     ): Bitmap? {
         return suspendCancellableCoroutine { continuation ->
             try {
+                virtualDisplay?.release()
+                imageReader?.close()
+
                 // Create ImageReader for capturing frames
                 imageReader = ImageReader.newInstance(
                     width,
@@ -80,10 +94,10 @@ class ScreenCaptureManager(
                     } catch (e: Exception) {
                         continuation.resumeWithException(e)
                     }
-                }, Handler(Looper.getMainLooper()))
+                }, mainHandler)
 
                 // Create virtual display
-                mediaProjection.createVirtualDisplay(
+                virtualDisplay = mediaProjection.createVirtualDisplay(
                     "ScreenCapture",
                     width,
                     height,
@@ -118,6 +132,8 @@ class ScreenCaptureManager(
      * Release resources
      */
     fun release() {
+        virtualDisplay?.release()
+        virtualDisplay = null
         imageReader?.close()
         imageReader = null
     }

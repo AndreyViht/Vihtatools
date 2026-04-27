@@ -17,11 +17,12 @@ import androidx.core.app.NotificationCompat
 import com.vihttools.mobile.R
 import com.vihttools.mobile.notification.NotificationManager
 import com.vihttools.mobile.settings.SettingsManager
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.cancel
 
 class OverlayService : Service() {
 
@@ -67,19 +68,24 @@ class OverlayService : Service() {
 
     private fun loadSettings() {
         scope.launch {
-            // Load button position
-            SettingsManager.getButtonPositionX(this@OverlayService).collect { x ->
-                updateButtonPosition(x, lastY.toInt())
-            }
-
-            // Load transparency
-            SettingsManager.getButtonTransparency(this@OverlayService).collect { transparency ->
+            combine(
+                SettingsManager.getButtonPositionX(this@OverlayService),
+                SettingsManager.getButtonPositionY(this@OverlayService),
+                SettingsManager.getButtonTransparency(this@OverlayService)
+            ) { x, y, transparency ->
+                Triple(x, y, transparency)
+            }.collect { (x, y, transparency) ->
+                updateButtonPosition(x, y)
                 updateButtonTransparency(transparency)
             }
         }
     }
 
     private fun createOverlayButton() {
+        if (overlayView != null) {
+            return
+        }
+
         val params = WindowManager.LayoutParams().apply {
             type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
