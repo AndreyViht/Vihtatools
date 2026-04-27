@@ -99,13 +99,14 @@ class OCRMonitoringService : Service() {
                 val bitmap = screenCaptureManager?.captureChatArea() ?: return@launch
                 val recognizedText = ocrDetector.recognizeText(bitmap)
 
-                if (!gameDetected && ocrDetector.isGameDetected(recognizedText, bitmap)) {
+                val reports = ocrDetector.extractReports(recognizedText)
+
+                if (!gameDetected && (ocrDetector.isGameDetected(recognizedText, bitmap) || reports.isNotEmpty())) {
                     gameDetected = true
                     showReadyNotification()
                 }
 
                 if (gameDetected) {
-                    val reports = ocrDetector.extractReports(recognizedText)
                     processReports(reports)
                 }
 

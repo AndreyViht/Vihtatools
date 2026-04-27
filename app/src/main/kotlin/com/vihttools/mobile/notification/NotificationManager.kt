@@ -117,6 +117,9 @@ object NotificationManager {
             .setContentText("Готов к работе")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setAutoCancel(true)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setOnlyAlertOnce(false)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVibrate(longArrayOf(0, 250, 150, 250))
     }

@@ -17,7 +17,7 @@ class OCRTextDetector {
     )
     private val reportLineRegexes = listOf(
         Regex(
-            """([A-Za-zА-Яа-яЁё0-9_ .-]{2,32})\s*[\[\(]\s*(\d{1,10})\s*[\]\)]\s*[:：\-]\s*(.+)""",
+            """([A-Za-zА-Яа-яЁё0-9_ .-]{2,32})\s*[\[\(]\s*(\d{1,10})\s*[\]\)]\s*(?:[:：\-]\s*)?(.+)""",
             RegexOption.IGNORE_CASE
         ),
         Regex(
@@ -62,8 +62,8 @@ class OCRTextDetector {
     fun hasWelcomeLineColors(bitmap: Bitmap): Boolean {
         val width = bitmap.width
         val height = bitmap.height
-        val scanWidth = (width * 0.55f).toInt().coerceAtLeast(1)
-        val scanHeight = (height * 0.35f).toInt().coerceAtLeast(1)
+        val scanWidth = (width * 0.75f).toInt().coerceAtLeast(1)
+        val scanHeight = (height * 0.45f).toInt().coerceAtLeast(1)
         val rowStep = 2
         val colStep = 2
 
@@ -82,7 +82,7 @@ class OCRTextDetector {
                 }
             }
 
-            if (yellowPixelsInRow >= 18 && longestRun >= 5) {
+            if (yellowPixelsInRow >= 8 && longestRun >= 3) {
                 return true
             }
         }
@@ -205,7 +205,12 @@ class OCRTextDetector {
         val red = Color.red(pixel)
         val green = Color.green(pixel)
         val blue = Color.blue(pixel)
-        return red >= 190 && green >= 150 && green <= 235 && blue <= 90 && red > blue + 100
+        return red >= 150 &&
+                green >= 110 &&
+                blue <= 150 &&
+                red > blue + 45 &&
+                green > blue + 35 &&
+                red + green >= 285
     }
 
     data class ReportData(
