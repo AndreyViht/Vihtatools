@@ -78,7 +78,7 @@ fun PermissionScreen(
                     text = "Display over other apps: Show the floating button while you play\n\nSend notifications: Alert you when new reports arrive",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFFB0B0B0),
-                    lineHeight = 20.dp
+                    lineHeight = 20.sp
                 )
             }
         }
