@@ -1,8 +1,10 @@
 package com.vihttools.mobile.ocr
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.tasks.await
 
@@ -32,20 +34,14 @@ class OCRTextDetector {
      * Recognize text from a bitmap image
      */
     suspend fun recognizeText(bitmap: Bitmap): String {
-        return try {
-            val image = InputImage.fromBitmap(bitmap, 0)
-            val visionText = textRecognizer.process(image).await()
-            visionText.text
-        } catch (e: Exception) {
-            e.printStackTrace()
-            ""
-        }
+        val image = InputImage.fromBitmap(bitmap, 0)
+        return processImage(textRecognizer, image)
     }
 
     /**
      * Check if the game welcome message is detected
      */
-    fun isGameDetected(text: String): Boolean {
+    fun isGameDetected(text: String, bitmap: Bitmap? = null): Boolean {
         val normalizedText = normalizeForSearch(text)
         val welcomePatterns = listOf(
             "добро пожаловать",
@@ -54,9 +50,44 @@ class OCRTextDetector {
             "grand mobile",
             "welcome to grand mobile"
         )
-        return welcomePatterns.any { pattern ->
+        val textDetected = welcomePatterns.any { pattern ->
             normalizedText.contains(normalizeForSearch(pattern))
         }
+        return textDetected || bitmap?.let { hasWelcomeLineColors(it) } == true
+    }
+
+    /**
+     * Fallback for the yellow welcome/system line in the chat area.
+     */
+    fun hasWelcomeLineColors(bitmap: Bitmap): Boolean {
+        val width = bitmap.width
+        val height = bitmap.height
+        val scanWidth = (width * 0.55f).toInt().coerceAtLeast(1)
+        val scanHeight = (height * 0.35f).toInt().coerceAtLeast(1)
+        val rowStep = 2
+        val colStep = 2
+
+        for (y in 0 until scanHeight step rowStep) {
+            var yellowPixelsInRow = 0
+            var longestRun = 0
+            var currentRun = 0
+
+            for (x in 0 until scanWidth step colStep) {
+                if (isWelcomeYellow(bitmap.getPixel(x, y))) {
+                    yellowPixelsInRow++
+                    currentRun++
+                    longestRun = maxOf(longestRun, currentRun)
+                } else {
+                    currentRun = 0
+                }
+            }
+
+            if (yellowPixelsInRow >= 18 && longestRun >= 5) {
+                return true
+            }
+        }
+
+        return false
     }
 
     /**
@@ -159,6 +190,22 @@ class OCRTextDetector {
             .replace('ё', 'е')
             .replace(Regex("""\s+"""), " ")
             .trim()
+    }
+
+    private suspend fun processImage(recognizer: TextRecognizer, image: InputImage): String {
+        return try {
+            recognizer.process(image).await().text
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ""
+        }
+    }
+
+    private fun isWelcomeYellow(pixel: Int): Boolean {
+        val red = Color.red(pixel)
+        val green = Color.green(pixel)
+        val blue = Color.blue(pixel)
+        return red >= 190 && green >= 150 && green <= 235 && blue <= 90 && red > blue + 100
     }
 
     data class ReportData(

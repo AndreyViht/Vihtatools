@@ -12,6 +12,7 @@ object NotificationManager {
     const val OVERLAY_CHANNEL_ID = "overlay_channel"
     const val REPORT_CHANNEL_ID = "report_channel"
     const val OCR_CHANNEL_ID = "ocr_channel"
+    const val READY_CHANNEL_ID = "ready_channel"
 
     fun createNotificationChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -49,6 +50,17 @@ object NotificationManager {
                 enableVibration(false)
             }
             notificationManager.createNotificationChannel(ocrChannel)
+
+            // Ready channel
+            val readyChannel = NotificationChannel(
+                READY_CHANNEL_ID,
+                "Готовность приложения",
+                AndroidNotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Уведомления о готовности Viht aTools"
+                enableVibration(true)
+            }
+            notificationManager.createNotificationChannel(readyChannel)
         }
     }
 
@@ -88,5 +100,24 @@ object NotificationManager {
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+    }
+
+    fun buildOCRReadyNotification(context: Context): NotificationCompat.Builder {
+        return NotificationCompat.Builder(context, OCR_CHANNEL_ID)
+            .setContentTitle("Viht aTools")
+            .setContentText("Готов к работе")
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+    }
+
+    fun buildReadyNotification(context: Context): NotificationCompat.Builder {
+        return NotificationCompat.Builder(context, READY_CHANNEL_ID)
+            .setContentTitle("Viht aTools")
+            .setContentText("Готов к работе")
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVibrate(longArrayOf(0, 250, 150, 250))
     }
 }
