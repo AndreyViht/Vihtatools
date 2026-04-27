@@ -263,7 +263,7 @@ class QuickReplyPanel(
         }
 
         val closeText = TextView(context).apply {
-            text = "Close"
+            text = "Закрыть"
             textSize = 14f
             setTextColor(0xFFFFFFFF.toInt())
             gravity = android.view.Gravity.CENTER

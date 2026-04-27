@@ -52,11 +52,7 @@ class ScreenCaptureManager(
             val screenHeight = displayMetrics.heightPixels
             val density = displayMetrics.densityDpi
 
-            // Define chat area (top-left, approximately 1/3 of screen)
-            val chatAreaWidth = (screenWidth * 0.4).toInt()
-            val chatAreaHeight = (screenHeight * 0.3).toInt()
-
-            captureScreenArea(0, 0, chatAreaWidth, chatAreaHeight, density)
+            captureScreenArea(0, 0, screenWidth, screenHeight, density)
         } catch (e: Exception) {
             e.printStackTrace()
             null

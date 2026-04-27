@@ -3,25 +3,27 @@ package com.vihttools.mobile.service
 import android.app.Service
 import android.content.Intent
 import android.graphics.PixelFormat
-import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.TextView
-import androidx.core.app.NotificationCompat
-import com.vihttools.mobile.R
+import com.vihttools.mobile.data.AppDatabase
+import com.vihttools.mobile.data.Report
+import com.vihttools.mobile.data.Template
 import com.vihttools.mobile.notification.NotificationManager
 import com.vihttools.mobile.settings.SettingsManager
-import kotlinx.coroutines.cancel
+import com.vihttools.mobile.ui.panel.QuickReplyPanel
+import com.vihttools.mobile.ui.panel.ReportsListPanel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class OverlayService : Service() {
@@ -35,15 +37,21 @@ class OverlayService : Service() {
     private var initialY = 0f
     private var isDragging = false
     private var buttonColor = 0x80606060.toInt()  // Gray by default
+    private lateinit var database: AppDatabase
+    private var reportsPanel: ReportsListPanel? = null
+    private var quickReplyPanel: QuickReplyPanel? = null
 
     private val scope = CoroutineScope(Dispatchers.Main + Job())
     private var settingsJob: Job? = null
+    private var reportCountJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        database = AppDatabase.getDatabase(this)
         NotificationManager.createNotificationChannels(this)
         createNotification()
+        observeReportCount()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -56,6 +64,8 @@ class OverlayService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        quickReplyPanel?.hide()
+        reportsPanel?.hide()
         if (overlayView != null) {
             windowManager.removeView(overlayView)
         }
@@ -65,6 +75,23 @@ class OverlayService : Service() {
     private fun createNotification() {
         val notification = NotificationManager.buildOverlayNotification(this).build()
         startForeground(1, notification)
+    }
+
+    private fun observeReportCount() {
+        if (reportCountJob != null) {
+            return
+        }
+
+        reportCountJob = scope.launch {
+            database.reportDao().getUnreadReportCount().collect { count ->
+                updateReportCount(count)
+                if (count > 0) {
+                    setButtonToRed()
+                } else {
+                    setButtonToGray()
+                }
+            }
+        }
     }
 
     private fun loadSettings() {
@@ -195,7 +222,55 @@ class OverlayService : Service() {
     }
 
     private fun openReportsPanel() {
-        // TODO: Implement reports panel opening
+        scope.launch {
+            if (reportsPanel != null) {
+                reportsPanel?.hide()
+                reportsPanel = null
+                return@launch
+            }
+
+            val reports = database.reportDao().getAllReports().first()
+            reportsPanel = ReportsListPanel(
+                context = this@OverlayService,
+                windowManager = windowManager,
+                onReportSelected = { report ->
+                    openQuickReplyPanel(report)
+                },
+                onClose = {
+                    reportsPanel = null
+                }
+            ).also { panel ->
+                panel.show(reports)
+            }
+        }
+    }
+
+    private fun openQuickReplyPanel(report: Report) {
+        scope.launch {
+            reportsPanel?.hide()
+            reportsPanel = null
+            quickReplyPanel?.hide()
+
+            val templates = database.templateDao().getAllActiveTemplates().first()
+                .ifEmpty { defaultTemplates() }
+            quickReplyPanel = QuickReplyPanel(
+                context = this@OverlayService,
+                windowManager = windowManager,
+                onClose = {
+                    quickReplyPanel = null
+                }
+            ).also { panel ->
+                panel.show(report, templates)
+            }
+        }
+    }
+
+    private fun defaultTemplates(): List<Template> {
+        return listOf(
+            Template(label = "ТП", command = "/pm {ID} Здравствуйте, чем могу помочь?", order = 0),
+            Template(label = "Слежу", command = "/pm {ID} Принял репорт, начинаю проверку.", order = 1),
+            Template(label = "Закр", command = "/pm {ID} Репорт закрыт. Приятной игры.", order = 2)
+        )
     }
 
     fun updateReportCount(count: Int) {

@@ -39,7 +39,7 @@ fun TemplatesScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "← Templates",
+                text = "← Шаблоны",
                 style = MaterialTheme.typography.headlineSmall,
                 color = Color.White,
                 modifier = Modifier.clickable { onBack() }
@@ -51,11 +51,11 @@ fun TemplatesScreen(
                     containerColor = Color(0xFFE63946)
                 )
             ) {
-                Text("Add", color = Color.White)
+                Text("Добавить", color = Color.White)
             }
         }
 
-        // Templates List
+        // Список шаблонов
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
@@ -70,17 +70,17 @@ fun TemplatesScreen(
             }
         }
 
-        // Add Template Dialog
+        // Диалог добавления шаблона
         if (showAddDialog) {
             AlertDialog(
                 onDismissRequest = { showAddDialog = false },
-                title = { Text("Add Template") },
+                title = { Text("Добавить шаблон") },
                 text = {
                     Column {
                         TextField(
                             value = newLabel,
                             onValueChange = { newLabel = it },
-                            label = { Text("Label (e.g., Warn)") },
+                            label = { Text("Название, например Варн") },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp)
@@ -88,7 +88,7 @@ fun TemplatesScreen(
                         TextField(
                             value = newCommand,
                             onValueChange = { newCommand = it },
-                            label = { Text("Command (use {ID} for player ID)") },
+                            label = { Text("Команда, используй {ID} для ID игрока") },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -109,12 +109,12 @@ fun TemplatesScreen(
                             }
                         }
                     ) {
-                        Text("Add")
+                        Text("Добавить")
                     }
                 },
                 dismissButton = {
                     Button(onClick = { showAddDialog = false }) {
-                        Text("Cancel")
+                        Text("Отмена")
                     }
                 }
             )

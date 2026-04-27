@@ -10,12 +10,12 @@ object ClipboardManager {
     /**
      * Copy text to clipboard and show toast
      */
-    fun copyToClipboard(context: Context, text: String, label: String = "Command") {
+    fun copyToClipboard(context: Context, text: String, label: String = "Команда") {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText(label, text)
         clipboard.setPrimaryClip(clip)
 
-        Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Скопировано в буфер обмена", Toast.LENGTH_SHORT).show()
     }
 
     /**

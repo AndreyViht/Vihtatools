@@ -36,14 +36,14 @@ fun PermissionScreen(
         )
 
         Text(
-            text = "Permissions Required",
+            text = "Нужны разрешения",
             style = MaterialTheme.typography.headlineMedium,
             color = Color.White,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
         Text(
-            text = "Viht Tools Mobile needs permissions to work properly",
+            text = "Viht Tools Mobile нужны разрешения для работы поверх игры и уведомлений",
             style = MaterialTheme.typography.bodyLarge,
             color = Color(0xFFB0B0B0),
             textAlign = TextAlign.Center,
@@ -69,13 +69,13 @@ fun PermissionScreen(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Why these permissions?",
+                    text = "Зачем эти разрешения?",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 Text(
-                    text = "Display over other apps: Show the floating button while you play\n\nSend notifications: Alert you when new reports arrive",
+                    text = "Поверх других приложений: показывает плавающую кнопку во время игры\n\nУведомления: сообщает о новых репортах",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFFB0B0B0),
                     lineHeight = 20.sp
@@ -94,7 +94,7 @@ fun PermissionScreen(
             )
         ) {
             Text(
-                text = "Go to Settings",
+                text = "Открыть настройки",
                 style = MaterialTheme.typography.labelLarge,
                 color = Color.White
             )
@@ -112,7 +112,7 @@ fun PermissionScreen(
             )
         ) {
             Text(
-                text = "Skip",
+                text = "Пропустить",
                 style = MaterialTheme.typography.labelLarge
             )
         }
@@ -124,15 +124,15 @@ fun PermissionCard(permission: String) {
     val (icon, title, description) = when (permission) {
         "OVERLAY" -> Triple(
             "📱",
-            "Display over other apps",
-            "Show the floating button on top of any app"
+            "Поверх других приложений",
+            "Показывает плавающую кнопку поверх игры"
         )
         "NOTIFICATION" -> Triple(
             "🔔",
-            "Send notifications",
-            "Alert you when new reports arrive"
+            "Уведомления",
+            "Сообщает, когда приходит новый репорт"
         )
-        else -> Triple("❓", "Unknown", "Unknown permission")
+        else -> Triple("?", "Неизвестно", "Неизвестное разрешение")
     }
 
     Card(

@@ -23,8 +23,8 @@ fun HomeScreen(
     var statusMessage by remember(isOverlayRunning) {
         mutableStateOf(
             when {
-                isOverlayRunning -> "Overlay is running..."
-                else -> "Waiting for game..."
+                isOverlayRunning -> "Оверлей запущен..."
+                else -> "Ожидание запуска игры..."
             }
         )
     }
@@ -93,7 +93,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     StatItem(
-                        label = "Active",
+                        label = "Активные",
                         value = activeReports.toString()
                     )
                     Divider(
@@ -103,7 +103,7 @@ fun HomeScreen(
                         color = Color(0xFF404040)
                     )
                     StatItem(
-                        label = "Responded",
+                        label = "Отвечено",
                         value = respondedReports.toString()
                     )
                 }
@@ -122,7 +122,7 @@ fun HomeScreen(
                 )
             ) {
                 Text(
-                    text = "Start Overlay",
+                    text = "Запустить оверлей",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White
                 )
@@ -138,7 +138,7 @@ fun HomeScreen(
                 )
             ) {
                 Text(
-                    text = "Stop Overlay",
+                    text = "Остановить оверлей",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White
                 )
@@ -158,7 +158,7 @@ fun HomeScreen(
             )
         ) {
             Text(
-                text = "Settings",
+                text = "Настройки",
                 style = MaterialTheme.typography.labelLarge
             )
         }
@@ -174,13 +174,13 @@ fun HomeScreen(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "How it works",
+                    text = "Как это работает",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 Text(
-                    text = "1. Tap \"Start Overlay\" to begin monitoring\n2. The floating button will appear on your screen\n3. New reports will be highlighted\n4. Tap the button to reply quickly",
+                    text = "1. Нажмите «Запустить оверлей»\n2. На экране появится плавающая кнопка\n3. Новые репорты будут подсвечены\n4. Нажмите кнопку, чтобы быстро ответить",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFFB0B0B0),
                     lineHeight = 18.sp

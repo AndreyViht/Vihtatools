@@ -20,10 +20,10 @@ object NotificationManager {
             // Overlay channel
             val overlayChannel = NotificationChannel(
                 OVERLAY_CHANNEL_ID,
-                "Overlay Service",
+                "Плавающая кнопка",
                 AndroidNotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Notifications for overlay service"
+                description = "Уведомления для плавающей кнопки"
                 enableVibration(false)
             }
             notificationManager.createNotificationChannel(overlayChannel)
@@ -31,10 +31,10 @@ object NotificationManager {
             // Report channel
             val reportChannel = NotificationChannel(
                 REPORT_CHANNEL_ID,
-                "New Reports",
+                "Новые репорты",
                 AndroidNotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Notifications for new reports"
+                description = "Уведомления о новых репортах"
                 enableVibration(true)
             }
             notificationManager.createNotificationChannel(reportChannel)
@@ -42,10 +42,10 @@ object NotificationManager {
             // OCR channel
             val ocrChannel = NotificationChannel(
                 OCR_CHANNEL_ID,
-                "OCR Monitoring",
+                "OCR мониторинг",
                 AndroidNotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Notifications for OCR monitoring"
+                description = "Уведомления OCR мониторинга"
                 enableVibration(false)
             }
             notificationManager.createNotificationChannel(ocrChannel)
@@ -55,7 +55,7 @@ object NotificationManager {
     fun buildOverlayNotification(context: Context): NotificationCompat.Builder {
         return NotificationCompat.Builder(context, OVERLAY_CHANNEL_ID)
             .setContentTitle("Viht Tools Mobile")
-            .setContentText("Overlay is running")
+            .setContentText("Плавающая кнопка запущена")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -69,11 +69,11 @@ object NotificationManager {
         reportCount: Int
     ): NotificationCompat.Builder {
         return NotificationCompat.Builder(context, REPORT_CHANNEL_ID)
-            .setContentTitle("🔴 New Report")
+            .setContentTitle("Новый репорт")
             .setContentText("$nickname [ID: $playerId]")
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText("$reportText · Reports: $reportCount")
+                    .bigText("$reportText · Репортов: $reportCount")
             )
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setAutoCancel(true)
@@ -84,7 +84,7 @@ object NotificationManager {
     fun buildOCRNotification(context: Context): NotificationCompat.Builder {
         return NotificationCompat.Builder(context, OCR_CHANNEL_ID)
             .setContentTitle("Viht Tools Mobile")
-            .setContentText("Monitoring game chat...")
+            .setContentText("Идёт поиск игры и репортов...")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)

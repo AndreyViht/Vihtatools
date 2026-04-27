@@ -69,9 +69,9 @@ object PermissionManager {
      */
     fun getPermissionDescription(permission: String): String {
         return when (permission) {
-            "OVERLAY" -> "Display over other apps"
-            "NOTIFICATION" -> "Send notifications"
-            else -> "Unknown permission"
+            "OVERLAY" -> "Показывать поверх других приложений"
+            "NOTIFICATION" -> "Отправлять уведомления"
+            else -> "Неизвестное разрешение"
         }
     }
 }

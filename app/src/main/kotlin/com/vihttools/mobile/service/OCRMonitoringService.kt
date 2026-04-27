@@ -100,19 +100,14 @@ class OCRMonitoringService : Service() {
                 val bitmap = screenCaptureManager?.captureChatArea() ?: return@launch
                 val recognizedText = ocrDetector.recognizeText(bitmap)
 
-                // Check for game detection
-                if (!gameDetected) {
-                    gameDetected = ocrDetector.isGameDetected(recognizedText)
-                    if (gameDetected) {
-                        showGameDetectedNotification()
-                    }
+                val reports = ocrDetector.extractReports(recognizedText)
+
+                if (!gameDetected && (ocrDetector.isGameDetected(recognizedText) || reports.isNotEmpty())) {
+                    gameDetected = true
+                    showGameDetectedNotification()
                 }
 
-                if (gameDetected) {
-                    // Extract and process reports
-                    val reports = ocrDetector.extractReports(recognizedText)
-                    processReports(reports)
-                }
+                processReports(reports)
 
                 bitmap.recycle()
             } catch (e: Exception) {
@@ -154,8 +149,8 @@ class OCRMonitoringService : Service() {
 
     private fun showGameDetectedNotification() {
         val notification = NotificationCompat.Builder(this, NotificationManager.REPORT_CHANNEL_ID)
-            .setContentTitle("Game Detected")
-            .setContentText("Viht Tools Mobile is now monitoring reports")
+            .setContentTitle("Игра найдена")
+            .setContentText("Viht Tools Mobile отслеживает репорты")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setAutoCancel(true)
             .build()
