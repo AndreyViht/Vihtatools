@@ -148,7 +148,7 @@ class OCRMonitoringService : Service() {
     }
 
     private fun showReadyNotification() {
-        sendBroadcast(Intent(ACTION_READY).setPackage(packageName))
+        sendOverlayEvent(Intent(ACTION_READY))
 
         val notificationManager = getSystemService(android.app.NotificationManager::class.java)
         notificationManager.notify(2, NotificationManager.buildOCRReadyNotification(this).build())
@@ -156,9 +156,8 @@ class OCRMonitoringService : Service() {
     }
 
     private fun showReportNotification(report: Report) {
-        sendBroadcast(
+        sendOverlayEvent(
             Intent(ACTION_NEW_REPORT)
-                .setPackage(packageName)
                 .putExtra(EXTRA_REPORT_ID, report.id)
         )
 
@@ -175,6 +174,10 @@ class OCRMonitoringService : Service() {
             report.playerId,  // Use playerId as notification ID
             notification
         )
+    }
+
+    private fun sendOverlayEvent(intent: Intent) {
+        startService(intent.setClass(this, OverlayService::class.java))
     }
 
     companion object {

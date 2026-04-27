@@ -1,10 +1,7 @@
 package com.vihttools.mobile.service
 
 import android.app.Service
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
@@ -45,14 +42,6 @@ class OverlayService : Service() {
     private var reportsPanel: ReportsListPanel? = null
     private var quickReplyPanel: QuickReplyPanel? = null
     private var overlayNotificationPanel: OverlayNotificationPanel? = null
-    private val ocrEventReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.action) {
-                OCRMonitoringService.ACTION_READY -> showReadyOverlayNotification()
-                OCRMonitoringService.ACTION_NEW_REPORT -> handleNewReportEvent(intent)
-            }
-        }
-    }
 
     private val scope = CoroutineScope(Dispatchers.Main + Job())
     private var settingsJob: Job? = null
@@ -68,12 +57,15 @@ class OverlayService : Service() {
         NotificationManager.createNotificationChannels(this)
         createNotification()
         observeReportCount()
-        registerOcrEventReceiver()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         createOverlayButton()
         loadSettings()
+        when (intent?.action) {
+            ACTION_SHOW_READY -> showReadyOverlayNotification()
+            ACTION_SHOW_REPORT -> handleNewReportEvent(intent)
+        }
         return START_STICKY
     }
 
@@ -84,7 +76,6 @@ class OverlayService : Service() {
         quickReplyPanel?.hide()
         reportsPanel?.hide()
         overlayNotificationPanel?.hideAll()
-        runCatching { unregisterReceiver(ocrEventReceiver) }
         if (overlayView != null) {
             windowManager.removeView(overlayView)
         }
@@ -94,18 +85,6 @@ class OverlayService : Service() {
     private fun createNotification() {
         val notification = NotificationManager.buildOverlayNotification(this).build()
         startForeground(1, notification)
-    }
-
-    private fun registerOcrEventReceiver() {
-        val filter = IntentFilter().apply {
-            addAction(OCRMonitoringService.ACTION_READY)
-            addAction(OCRMonitoringService.ACTION_NEW_REPORT)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(ocrEventReceiver, filter, RECEIVER_NOT_EXPORTED)
-        } else {
-            registerReceiver(ocrEventReceiver, filter)
-        }
     }
 
     private fun observeReportCount() {
@@ -309,7 +288,7 @@ class OverlayService : Service() {
     }
 
     private fun handleNewReportEvent(intent: Intent) {
-        val reportId = intent.getLongExtra(OCRMonitoringService.EXTRA_REPORT_ID, 0L).toInt()
+        val reportId = intent.getLongExtra(EXTRA_REPORT_ID, 0L).toInt()
         if (reportId == 0) return
 
         scope.launch {
@@ -365,5 +344,11 @@ class OverlayService : Service() {
 
     private fun updateButtonTransparency(transparency: Float) {
         overlayView?.alpha = transparency
+    }
+
+    companion object {
+        const val ACTION_SHOW_READY = "com.vihttools.mobile.action.SHOW_READY_OVERLAY"
+        const val ACTION_SHOW_REPORT = "com.vihttools.mobile.action.SHOW_REPORT_OVERLAY"
+        const val EXTRA_REPORT_ID = "extra_report_id"
     }
 }

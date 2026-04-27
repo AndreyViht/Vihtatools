@@ -17,7 +17,7 @@ class OCRTextDetector {
     )
     private val reportLineRegexes = listOf(
         Regex(
-            """([A-Za-zА-Яа-яЁё0-9_ .-]{2,32})\s*[\[\(]\s*(\d{1,10})\s*[\]\)]\s*(?:[:：\-]\s*)?(.+)""",
+            """(?:\d{1,2}[:.]\d{2}\s*)?([A-Za-zА-Яа-яЁё0-9_.-]{2,32})\s*[\[\(]\s*(\d{1,10})\s*[\]\)]\s*(?:[:：\-]\s*)?(.+)""",
             RegexOption.IGNORE_CASE
         ),
         Regex(
@@ -97,11 +97,21 @@ class OCRTextDetector {
     fun extractReports(text: String): List<ReportData> {
         val reports = mutableListOf<ReportData>()
 
-        val candidateLines = text
+        val lines = text
             .replace("\r", "\n")
             .split('\n')
             .map { it.trim() }
             .filter { it.isNotBlank() }
+        val candidateLines = buildList {
+            addAll(lines)
+            for (index in 0 until lines.lastIndex) {
+                add("${lines[index]} ${lines[index + 1]}")
+            }
+            for (index in 0 until lines.size - 2) {
+                add("${lines[index]} ${lines[index + 1]} ${lines[index + 2]}")
+            }
+            add(lines.joinToString(" "))
+        }.distinct()
 
         for (line in candidateLines) {
             val normalizedLine = normalizeForSearch(line)
