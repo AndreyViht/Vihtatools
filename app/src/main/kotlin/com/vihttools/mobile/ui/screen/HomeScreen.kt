@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun HomeScreen(
@@ -182,7 +183,7 @@ fun HomeScreen(
                     text = "1. Tap \"Start Overlay\" to begin monitoring\n2. The floating button will appear on your screen\n3. New reports will be highlighted\n4. Tap the button to reply quickly",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFFB0B0B0),
-                    lineHeight = 18.dp
+                    lineHeight = 18.sp
                 )
             }
         }
