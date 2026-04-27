@@ -1,7 +1,7 @@
 package com.vihttools.mobile.notification
 
 import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.app.NotificationManager as AndroidNotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -15,13 +15,13 @@ object NotificationManager {
 
     fun createNotificationChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as AndroidNotificationManager
 
             // Overlay channel
             val overlayChannel = NotificationChannel(
                 OVERLAY_CHANNEL_ID,
                 "Overlay Service",
-                NotificationManager.IMPORTANCE_LOW
+                AndroidNotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = "Notifications for overlay service"
                 enableVibration(false)
@@ -32,7 +32,7 @@ object NotificationManager {
             val reportChannel = NotificationChannel(
                 REPORT_CHANNEL_ID,
                 "New Reports",
-                NotificationManager.IMPORTANCE_HIGH
+                AndroidNotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Notifications for new reports"
                 enableVibration(true)
@@ -43,7 +43,7 @@ object NotificationManager {
             val ocrChannel = NotificationChannel(
                 OCR_CHANNEL_ID,
                 "OCR Monitoring",
-                NotificationManager.IMPORTANCE_LOW
+                AndroidNotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = "Notifications for OCR monitoring"
                 enableVibration(false)

@@ -128,7 +128,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startOverlay() {
-        if (!PermissionManager.hasOverlayPermission(this)) {
+        if (!PermissionManager.hasAllPermissions(this)) {
             requestMissingPermissions()
             return
         }

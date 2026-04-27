@@ -23,6 +23,9 @@ class ScreenCaptureManager(
 
     private var imageReader: ImageReader? = null
     private var virtualDisplay: VirtualDisplay? = null
+    private var captureWidth = 0
+    private var captureHeight = 0
+    private var captureDensity = 0
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val displayMetrics = DisplayMetrics()
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -64,24 +67,15 @@ class ScreenCaptureManager(
      * Capture a specific area of the screen
      */
     private suspend fun captureScreenArea(
-        x: Int,
-        y: Int,
+        @Suppress("UNUSED_PARAMETER") x: Int,
+        @Suppress("UNUSED_PARAMETER") y: Int,
         width: Int,
         height: Int,
         density: Int
     ): Bitmap? {
         return suspendCancellableCoroutine { continuation ->
             try {
-                virtualDisplay?.release()
-                imageReader?.close()
-
-                // Create ImageReader for capturing frames
-                imageReader = ImageReader.newInstance(
-                    width,
-                    height,
-                    PixelFormat.RGBA_8888,
-                    2
-                )
+                ensureCaptureResources(width, height, density)
 
                 imageReader?.setOnImageAvailableListener({ reader ->
                     try {
@@ -90,27 +84,59 @@ class ScreenCaptureManager(
                         val bitmap = imageToBitmap(image)
                         image.close()
 
-                        continuation.resume(bitmap)
+                        reader.setOnImageAvailableListener(null, null)
+                        if (continuation.isActive) {
+                            continuation.resume(bitmap)
+                        } else {
+                            bitmap.recycle()
+                        }
                     } catch (e: Exception) {
-                        continuation.resumeWithException(e)
+                        reader.setOnImageAvailableListener(null, null)
+                        if (continuation.isActive) {
+                            continuation.resumeWithException(e)
+                        }
                     }
                 }, mainHandler)
-
-                // Create virtual display
-                virtualDisplay = mediaProjection.createVirtualDisplay(
-                    "ScreenCapture",
-                    width,
-                    height,
-                    density,
-                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                    imageReader?.surface,
-                    null,
-                    null
-                )
+                continuation.invokeOnCancellation {
+                    imageReader?.setOnImageAvailableListener(null, null)
+                }
             } catch (e: Exception) {
                 continuation.resumeWithException(e)
             }
         }
+    }
+
+    private fun ensureCaptureResources(width: Int, height: Int, density: Int) {
+        if (
+            virtualDisplay != null &&
+            imageReader != null &&
+            captureWidth == width &&
+            captureHeight == height &&
+            captureDensity == density
+        ) {
+            return
+        }
+
+        release()
+        captureWidth = width
+        captureHeight = height
+        captureDensity = density
+        imageReader = ImageReader.newInstance(
+            width,
+            height,
+            PixelFormat.RGBA_8888,
+            2
+        )
+        virtualDisplay = mediaProjection.createVirtualDisplay(
+            "ScreenCapture",
+            width,
+            height,
+            density,
+            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+            imageReader?.surface,
+            null,
+            null
+        )
     }
 
     /**
@@ -120,11 +146,16 @@ class ScreenCaptureManager(
         val planes = image.planes
         val buffer = planes[0].buffer
         val pixelStride = planes[0].pixelStride
+        val rowStride = planes[0].rowStride
+        val rowPadding = rowStride - pixelStride * image.width
         val w = image.width
+        val h = image.height
 
-        val bitmap = Bitmap.createBitmap(w, image.height, Bitmap.Config.ARGB_8888)
-        bitmap.copyPixelsFromBuffer(buffer)
+        val paddedBitmap = Bitmap.createBitmap(w + rowPadding / pixelStride, h, Bitmap.Config.ARGB_8888)
+        paddedBitmap.copyPixelsFromBuffer(buffer)
 
+        val bitmap = Bitmap.createBitmap(paddedBitmap, 0, 0, w, h)
+        paddedBitmap.recycle()
         return bitmap
     }
 
